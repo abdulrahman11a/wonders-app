@@ -1,0 +1,56 @@
+[
+  {
+    "Id": 1,
+    "Name": "Great Pyramid of Giza",
+    "Country": "Egypt",
+    "Era": "Ancient Egypt",
+    "Type": "Pyramid",
+    "DiscoveryYear": -2560,
+    "Description": "The only surviving wonder of the original Seven Wonders of the Ancient World."
+  },
+  {
+    "Id": 2,
+    "Name": "Parthenon",
+    "Country": "Greece",
+    "Era": "Classical Greece",
+    "Type": "Temple",
+    "DiscoveryYear": -447,
+    "Description": "A temple on the Athenian Acropolis dedicated to the goddess Athena."
+  },
+  {
+    "Id": 3,
+    "Name": "Colosseum",
+    "Country": "Italy",
+    "Era": "Roman Empire",
+    "Type": "Amphitheater",
+    "DiscoveryYear": 80,
+    "Description": "An iconic amphitheater in Rome used for gladiatorial contests and public spectacles."
+  },
+  {
+    "Id": 4,
+    "Name": "Hanging Gardens of Babylon",
+    "Country": "Iraq",
+    "Era": "Mesopotamia",
+    "Type": "Garden",
+    "DiscoveryYear": -600,
+    "Description": "Legendary terraced gardens built in the ancient city of Babylon."
+  },
+  {
+    "Id": 5,
+    "Name": "Taj Mahal",
+    "Country": "India",
+    "Era": "Mughal Empire",
+    "Type": "Palace",
+    "DiscoveryYear": 1653,
+    "Description": "A white marble mausoleum built by Emperor Shah Jahan in memory of his wife Mumtaz Mahal."
+  },
+  {
+    "Id": 6,
+    "Name": "Great Wall of China",
+    "Country": "China",
+    "Era": "Han Dynasty",
+    "Type": "Wall",
+    "DiscoveryYear": -200,
+    "Description": "A vast series of fortifications built to protect China from invasions."
+  }
+]
