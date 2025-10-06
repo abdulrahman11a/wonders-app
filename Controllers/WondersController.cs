@@ -6,9 +6,6 @@ using WondersAPI.Models;
 
 namespace Ghaymah.WondersAPI.Controllers
 {
-    /// <summary>
-    /// API controller to manage Wonders (CRUD + Random).
-    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class WondersController : ControllerBase
@@ -23,154 +20,199 @@ namespace Ghaymah.WondersAPI.Controllers
         }
 
         // -------------------- GET ALL --------------------
-        /// <summary>
-        /// Get all wonders.
-        /// </summary>
-        /// <returns>List of all wonders.</returns>
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<Wonder>), 200)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> GetAllWonders()
         {
-            var wonders = await FetchAllWonders();
-            LogFetchedWonders(wonders.Count);
-            return Ok(wonders);
+            try
+            {
+                var wonders = await _context.Wonders.ToListAsync();
+                _logger.LogInformation("Fetched {Count} wonders from database", wonders.Count);
+                return Ok(wonders);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while fetching all wonders");
+                return StatusCode(500, new { message = "An error occurred while retrieving wonders." });
+            }
         }
-
-        private async Task<List<Wonder>> FetchAllWonders() =>
-            await _context.Wonders.ToListAsync();
-
-        private void LogFetchedWonders(int count) =>
-            _logger.LogInformation("Fetched {Count} wonders from database", count);
 
         // -------------------- GET BY ID --------------------
-        /// <summary>
-        /// Get a specific wonder by its ID.
-        /// </summary>
-        /// <param name="wonderId">The ID of the wonder.</param>
-        /// <returns>The wonder with the specified ID.</returns>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(Wonder), 200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> GetWonderById(int wonderId)
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> GetWonderById(string id)
         {
-            var wonder = await FindWonderOrNotFound(wonderId);
-            if (wonder is null) return NotFound(new { message = $"Wonder with ID {wonderId} not found" });
+            if (!int.TryParse(id, out var wonderId))
+            {
+                _logger.LogWarning("Invalid id provided: {Id}", id);
+                return BadRequest(new { message = "Invalid ID. Please provide a numeric ID." });
+            }
 
-            return Ok(wonder);
+            try
+            {
+                var wonder = await _context.Wonders.FindAsync(wonderId);
+                if (wonder == null)
+                {
+                    _logger.LogWarning("Wonder with ID {Id} not found", wonderId);
+                    return NotFound(new { message = $"Wonder with ID {wonderId} not found" });
+                }
+
+                return Ok(wonder);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while fetching wonder by ID {Id}", wonderId);
+                return StatusCode(500, new { message = "An error occurred while retrieving the wonder." });
+            }
         }
-
-        private async Task<Wonder?> FindWonderOrNotFound(int wonderId) =>
-            await _context.Wonders.FindAsync(wonderId);
 
         // -------------------- CREATE --------------------
-        /// <summary>
-        /// Create a new wonder.
-        /// </summary>
-        /// <param name="newWonder">The wonder to create.</param>
-        /// <returns>The created wonder.</returns>
         [HttpPost]
         [ProducesResponseType(typeof(Wonder), 201)]
-        public async Task<IActionResult> CreateWonder([FromBody] Wonder newWonder) =>
-            await SaveNewWonder(newWonder);
-
-        private async Task<IActionResult> SaveNewWonder(Wonder wonder)
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> CreateWonder([FromBody] Wonder newWonder)
         {
-            _context.Wonders.Add(wonder);
-            await _context.SaveChangesAsync();
-            LogCreatedWonder(wonder.Name);
-            return CreatedAtAction(nameof(GetWonderById), new { wonderId = wonder.Id }, wonder);
-        }
+            if (newWonder == null)
+                return BadRequest(new { message = "Request body is required." });
 
-        private void LogCreatedWonder(string name) =>
-            _logger.LogInformation("Created new wonder: {Name}", name);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                await _context.Wonders.AddAsync(newWonder);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Created new wonder: {Name}", newWonder.Name);
+
+                return CreatedAtAction(nameof(GetWonderById), new { id = newWonder.Id }, newWonder);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating wonder {Name}", newWonder.Name);
+                return StatusCode(500, new { message = "An error occurred while creating the wonder." });
+            }
+        }
 
         // -------------------- UPDATE --------------------
-        /// <summary>
-        /// Update an existing wonder.
-        /// </summary>
-        /// <param name="wonderId">The ID of the wonder to update.</param>
-        /// <param name="updatedWonder">The updated wonder data.</param>
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateWonder(int wonderId, [FromBody] Wonder updatedWonder)
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> UpdateWonder(string id, [FromBody] Wonder updatedWonder)
         {
-            var existingWonder = await FindWonderOrNotFound(wonderId);
-            if (existingWonder is null) return NotFound();
+            if (!int.TryParse(id, out var wonderId))
+            {
+                _logger.LogWarning("Invalid id provided for update: {Id}", id);
+                return BadRequest(new { message = "Invalid ID. Please provide a numeric ID." });
+            }
 
-            return await SaveUpdatedWonder(existingWonder, updatedWonder);
+            if (updatedWonder == null)
+                return BadRequest(new { message = "Request body is required." });
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // If the client provided an Id in the body, ensure it matches route id
+            if (updatedWonder.Id != 0 && updatedWonder.Id != wonderId)
+                return BadRequest(new { message = "ID mismatch between route and body." });
+
+            try
+            {
+                var existingWonder = await _context.Wonders.FindAsync(wonderId);
+                if (existingWonder == null)
+                {
+                    _logger.LogWarning("Cannot update: wonder with ID {Id} not found", wonderId);
+                    return NotFound(new { message = $"Wonder with ID {wonderId} not found" });
+                }
+
+                existingWonder.Name = updatedWonder.Name;
+                existingWonder.Country = updatedWonder.Country;
+                existingWonder.Era = updatedWonder.Era;
+                existingWonder.Type = updatedWonder.Type;
+                existingWonder.Description = updatedWonder.Description;
+                existingWonder.DiscoveryYear = updatedWonder.DiscoveryYear;
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Updated wonder with ID {Id}", wonderId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while updating wonder with ID {Id}", wonderId);
+                return StatusCode(500, new { message = "An error occurred while updating the wonder." });
+            }
         }
-
-        private async Task<IActionResult> SaveUpdatedWonder(Wonder target, Wonder source)
-        {
-            CopyWonderValues(target, source);
-            await _context.SaveChangesAsync();
-            LogUpdatedWonder(target.Id);
-            return NoContent();
-        }
-
-        private void CopyWonderValues(Wonder target, Wonder source)
-        {
-            target.Name = source.Name;
-            target.Country = source.Country;
-            target.Era = source.Era;
-            target.Type = source.Type;
-            target.Description = source.Description;
-            target.DiscoveryYear = source.DiscoveryYear;
-        }
-
-        private void LogUpdatedWonder(int wonderId) =>
-            _logger.LogInformation("Updated wonder with ID {Id}", wonderId);
 
         // -------------------- DELETE --------------------
-        /// <summary>
-        /// Delete a wonder by ID.
-        /// </summary>
-        /// <param name="wonderId">The ID of the wonder to delete.</param>
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteWonder(int wonderId)
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> DeleteWonder(string id)
         {
-            var wonder = await FindWonderOrNotFound(wonderId);
-            if (wonder is null) return NotFound();
+            if (!int.TryParse(id, out var wonderId))
+            {
+                _logger.LogWarning("Invalid id provided for delete: {Id}", id);
+                return BadRequest(new { message = "Invalid ID. Please provide a numeric ID." });
+            }
 
-            await RemoveWonder(wonder);
-            return NoContent();
+            try
+            {
+                var wonder = await _context.Wonders.FindAsync(wonderId);
+                if (wonder == null)
+                {
+                    _logger.LogWarning("Cannot delete: wonder with ID {Id} not found", wonderId);
+                    return NotFound(new { message = $"Wonder with ID {wonderId} not found" });
+                }
+
+                _context.Wonders.Remove(wonder);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Deleted wonder with ID {Id}", wonderId);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while deleting wonder with ID {Id}", wonderId);
+                return StatusCode(500, new { message = "An error occurred while deleting the wonder." });
+            }
         }
-
-        private async Task RemoveWonder(Wonder wonder)
-        {
-            _context.Wonders.Remove(wonder);
-            await _context.SaveChangesAsync();
-            LogDeletedWonder(wonder.Id);
-        }
-
-        private void LogDeletedWonder(int wonderId) =>
-            _logger.LogInformation("Deleted wonder with ID {Id}", wonderId);
 
         // -------------------- GET RANDOM --------------------
-        /// <summary>
-        /// Get a random wonder.
-        /// </summary>
-        /// <returns>A randomly selected wonder.</returns>
         [HttpGet("random")]
         [ProducesResponseType(typeof(Wonder), 200)]
         [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> GetRandomWonder()
         {
-            var allWonders = await FetchAllWonders();
-            if (!allWonders.Any()) return NotFound();
+            try
+            {
+                var wonders = await _context.Wonders.ToListAsync();
+                if (!wonders.Any())
+                {
+                    _logger.LogWarning("No wonders available for random selection");
+                    return NotFound(new { message = "No wonders available." });
+                }
 
-            var randomWonder = SelectRandomWonder(allWonders);
-            LogRandomWonder(randomWonder.Name);
-            return Ok(randomWonder);
+                var randomWonder = wonders[new Random().Next(wonders.Count)];
+                _logger.LogInformation("Returned random wonder: {Name}", randomWonder.Name);
+
+                return Ok(randomWonder);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while selecting random wonder");
+                return StatusCode(500, new { message = "An error occurred while retrieving a random wonder." });
+            }
         }
-
-        private Wonder SelectRandomWonder(List<Wonder> wonders) =>
-            wonders[new Random().Next(wonders.Count)];
-
-        private void LogRandomWonder(string name) =>
-            _logger.LogInformation("Returned random wonder: {Name}", name);
     }
 }
