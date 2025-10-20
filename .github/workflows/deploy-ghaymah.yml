@@ -15,8 +15,11 @@ jobs:
 
     - name: Install Ghaymah CLI
       run: |
-        curl -sSL https://cli.ghaymah.systems/install.sh | bash
+        curl -sSL https://cli.ghaymah.systems/install.sh -o install.sh
+        bash install.sh
         echo "$HOME/.ghaymah/bin" >> $GITHUB_PATH
+        ls $HOME/.ghaymah/bin
+        which gy || echo "gy not found"
 
     - name: Login to Ghaymah
       run: gy auth login --api-key ${{ secrets.GY_API_KEY }}
