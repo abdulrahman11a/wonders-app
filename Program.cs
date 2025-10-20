@@ -42,6 +42,8 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath);
 });
 
+builder.WebHost.UseUrls("http://0.0.0.0:80");
+
 var app = builder.Build();
 
 // Database seeding
