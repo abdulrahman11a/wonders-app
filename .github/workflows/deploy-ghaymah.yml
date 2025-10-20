@@ -3,7 +3,7 @@ name: Deploy to Ghaymah
 on:
   push:
     branches:
-      - main  
+      - main
 
 jobs:
   deploy:
@@ -15,10 +15,11 @@ jobs:
 
     - name: Install Ghaymah CLI
       run: |
-        curl -sSl https://cli.ghaymah.systems/install.sh | bash
+        curl -sSL https://cli.ghaymah.systems/install.sh | bash
+        echo "$HOME/.ghaymah/bin" >> $GITHUB_PATH
 
     - name: Login to Ghaymah
       run: gy auth login --api-key ${{ secrets.GY_API_KEY }}
 
-    - name: Start Tunnel or Deploy App
+    - name: Deploy App
       run: gy resource app launch .
