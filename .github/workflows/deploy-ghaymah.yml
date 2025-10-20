@@ -22,7 +22,7 @@ jobs:
         which gy || echo "gy not found"
 
     - name: Login to Ghaymah
-      run: gy auth login --api-key ${{ secrets.GY_API_KEY }}
+      run: gy auth login -e ${{ secrets.GY_EMAIL }} -p ${{ secrets.GY_PASSWORD }}
 
     - name: Deploy App
       run: gy resource app launch .
