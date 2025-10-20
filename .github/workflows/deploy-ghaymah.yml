@@ -17,8 +17,8 @@ jobs:
       run: |
         curl -sSL https://cli.ghaymah.systems/install.sh -o install.sh
         bash install.sh
-        echo "$HOME/.ghaymah/bin" >> $GITHUB_PATH
-        ls $HOME/.ghaymah/bin
+        echo "$HOME/ghaymah/bin" >> $GITHUB_PATH
+        ls $HOME/ghaymah/bin
         which gy || echo "gy not found"
 
     - name: Login to Ghaymah
