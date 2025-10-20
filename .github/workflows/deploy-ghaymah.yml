@@ -1,0 +1,24 @@
+name: Deploy to Ghaymah
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3
+
+    - name: Install Ghaymah CLI
+      run: |
+        curl -fsSL https://ghaymah-cli.install.sh | bash
+
+    - name: Deploy to Ghaymah
+      run: |
+        gy resource app launch .
+      env:
+        GY_API_KEY: ${{ secrets.GY_API_KEY }}
