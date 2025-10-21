@@ -25,15 +25,19 @@ jobs:
       run: gy auth login -e ${{ secrets.GY_EMAIL }} -p ${{ secrets.GY_PASSWORD }}
 
     - name: Deploy App and Show Output
+      id: deploy_app
       run: |
         OUTPUT=$(gy resource app launch .)
         echo "Deployment output:"
         echo "$OUTPUT"
+        # هنا نفرض الرابط ثابت مثلا لو نعرف اسمه "myapp.ghaymah.systems"
+        echo "🚀 App URL: https://myapp.ghaymah.systems"
+        # إذا الرابط يظهر في OUTPUT ممكن تستخرجه هنا وتطبعه
 
     - name: List all deployed apps
       run: gy resource app list
 
-    - name: Start Tunnel
+    - name: Start Tunnel and Show URL
       run: |
         gy tunnel start myapp --port 80 &
-        echo "Tunnel started at https://myapp.ghaymah.systems"
+        echo "Tunnel started at: https://myapp.ghaymah.systems"
