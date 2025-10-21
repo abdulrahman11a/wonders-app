@@ -24,10 +24,14 @@ jobs:
     - name: Login to Ghaymah
       run: gy auth login -e ${{ secrets.GY_EMAIL }} -p ${{ secrets.GY_PASSWORD }}
 
-    - name: Deploy App
+    - name: Deploy App and Show Output
       run: |
         OUTPUT=$(gy resource app launch .)
+        echo "Deployment output:"
         echo "$OUTPUT"
+
+    - name: List all deployed apps
+      run: gy resource app list
 
     - name: Start Tunnel
       run: |
