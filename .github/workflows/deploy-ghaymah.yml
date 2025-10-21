@@ -25,4 +25,11 @@ jobs:
       run: gy auth login -e ${{ secrets.GY_EMAIL }} -p ${{ secrets.GY_PASSWORD }}
 
     - name: Deploy App
-      run: gy resource app launch .
+      run: |
+        OUTPUT=$(gy resource app launch .)
+        echo "$OUTPUT"
+
+    - name: Start Tunnel
+      run: |
+        gy tunnel start myapp --port 80 &
+        echo "Tunnel started at https://myapp.ghaymah.systems"
