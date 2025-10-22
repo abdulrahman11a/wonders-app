@@ -1,43 +1,74 @@
-name: Deploy to Ghaymah
+name: CI/CD - Build & Deploy to Ghaymah
 
 on:
   push:
     branches:
       - main
+  pull_request:
 
 jobs:
-  deploy:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v3
+      # 1️⃣ Checkout source code
+      - name: Checkout source
+        uses: actions/checkout@v3
 
-    - name: Install Ghaymah CLI
-      run: |
-        curl -sSL https://cli.ghaymah.systems/install.sh -o install.sh
-        bash install.sh
-        echo "$HOME/ghaymah/bin" >> $GITHUB_PATH
-        ls $HOME/ghaymah/bin
-        which gy || echo "gy not found"
+      # 2️⃣ Set up .NET SDK
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
 
-    - name: Login to Ghaymah
-      run: gy auth login -e ${{ secrets.GY_EMAIL }} -p ${{ secrets.GY_PASSWORD }}
+      # 3️⃣ Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Deploy App and Show Output
-      id: deploy_app
-      run: |
-        OUTPUT=$(gy resource app launch .)
-        echo "Deployment output:"
-        echo "$OUTPUT"
-        "myapp.ghaymah.systems"
-        echo "App URL: https://myapp.ghaymah.systems"
-       
+      # 4️⃣ Lint (تحليل الكود)
+      - name: Run Linter
+        run: dotnet format --verify-no-changes || echo "::warning::Code formatting issues detected"
 
-    - name: List all deployed apps
-      run: gy resource app list
+      # 5️⃣ Build
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
 
-    - name: Start Tunnel and Show URL
-      run: |
-        gy tunnel start myapp --port 80 &
-        echo "Tunnel started at: https://myapp.ghaymah.systems"
+      # 6️⃣ Unit Tests + Coverage
+      - name: Run Unit Tests with Coverage
+        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      # 7️⃣ Generate HTML Coverage Report
+      - name: Generate Coverage Report
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"TestResults/coverage-report" -reporttypes:Html
+        env:
+          PATH: $PATH:/home/runner/.dotnet/tools
+
+      # 8️⃣ Upload coverage report as artifact
+      - name: Upload Coverage HTML Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: TestResults/coverage-report
+
+      # 9️⃣ Publish build output
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./out --no-build
+
+      # 🔟 Install Ghaymah CLI (safe version)
+      - name: Install Ghaymah CLI
+        run: |
+          curl -sSL https://cli.ghaymah.systems/install.sh -o install.sh
+          bash install.sh
+          echo "$HOME/.ghaymah/bin" >> $GITHUB_PATH
+          ls $HOME/.ghaymah/bin
+          which gy || echo "gy not found"
+
+      # 1️⃣1️⃣ Login to Ghaymah
+      - name: Login to Ghaymah
+        run: gy auth login -e ${{ secrets.GY_EMAIL }} -p ${{ secrets.GY_PASSWORD }}
+
+      # 1️⃣2️⃣ Deploy to Ghaymah
+      - name: Deploy to Ghaymah
+        run: gy deploy
