@@ -1,7 +1,6 @@
 {
-  "id": "740835a3-dadb-4b01-917c-738605322fc0",
-  "name": "wonders",
-  "projectId": "61bd7476-10e7-40e1-9590-27c969928390",
+  "name": "wondersApi",
+  "projectId": "b30a1df1-08ef-4bce-be33-a72d5bb8e41d",
   "ports": [
     {
       "expose": true,
