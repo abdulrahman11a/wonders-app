@@ -47,7 +47,7 @@ jobs:
 
       # 8️⃣ Upload coverage report as artifact
       - name: Upload Coverage HTML Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: TestResults/coverage-report
