@@ -77,4 +77,4 @@ jobs:
 
       # 1️⃣2️⃣ Deploy to Ghaymah
       - name: Deploy to Ghaymah
-        run: gy deploy
+        run: $HOME/ghaymah/bin/gy resource app launch
