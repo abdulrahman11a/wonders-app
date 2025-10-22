@@ -33,7 +33,7 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      # 6️⃣ Unit Tests + Coverage
+           # 6️⃣ Unit Tests + Coverage
       - name: Run Unit Tests with Coverage
         run: |
           dotnet test --configuration Release --no-build \
@@ -42,6 +42,14 @@ jobs:
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=cobertura \
             /p:CoverletOutput=./TestResults/coverage.cobertura.xml
+
+      # 🆕 Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./TestResults/coverage.cobertura.xml
+          fail_ci_if_error: true
+          verbose: true
 
       # 7️⃣ Generate HTML Coverage Report (only if coverage file exists)
       - name: Generate Coverage Report
