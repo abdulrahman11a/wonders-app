@@ -40,10 +40,12 @@ jobs:
       # 7️⃣ Generate HTML Coverage Report
       - name: Generate Coverage Report
         run: |
-          dotnet tool install -g dotnet-reportgenerator-globaltool
-          reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"TestResults/coverage-report" -reporttypes:Html
-        env:
-          PATH: $PATH:/home/runner/.dotnet/tools
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          export PATH="$PATH:/home/runner/.dotnet/tools"
+          ~/.dotnet/tools/reportgenerator \
+            -reports:"TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"TestResults/coverage-report" \
+            -reporttypes:Html
 
       # 8️⃣ Upload coverage report as artifact
       - name: Upload Coverage HTML Report
