@@ -35,20 +35,28 @@ jobs:
 
       # 6️⃣ Unit Tests + Coverage
       - name: Run Unit Tests with Coverage
-        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: |
+          dotnet test --configuration Release --no-build \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=cobertura \
+            /p:CoverletOutput=./TestResults/coverage.cobertura.xml
 
-      # 7️⃣ Generate HTML Coverage Report
+      # 7️⃣ Generate HTML Coverage Report (only if coverage file exists)
       - name: Generate Coverage Report
+        if: success() && hashFiles('TestResults/coverage.cobertura.xml') != ''
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           export PATH="$PATH:/home/runner/.dotnet/tools"
           ~/.dotnet/tools/reportgenerator \
-            -reports:"TestResults/**/coverage.cobertura.xml" \
+            -reports:"TestResults/coverage.cobertura.xml" \
             -targetdir:"TestResults/coverage-report" \
             -reporttypes:Html
 
-      # 8️⃣ Upload coverage report as artifact
+      # 8️⃣ Upload coverage report as artifact (only if it exists)
       - name: Upload Coverage HTML Report
+        if: success() && hashFiles('TestResults/coverage-report/index.html') != ''
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
