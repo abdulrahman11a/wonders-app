@@ -67,13 +67,9 @@ jobs:
         run: dotnet publish --configuration Release --output ./out --no-build
 
       # 🔟 Install Ghaymah CLI (safe version)
-      - name: Install Ghaymah CLI
-        run: |
-          curl -sSL https://cli.ghaymah.systems/install.sh -o install.sh
-          bash install.sh
-          echo "$HOME/.ghaymah/bin" >> $GITHUB_PATH
-          ls $HOME/.ghaymah/bin
-          which gy || echo "gy not found"
+      - name: 🌩️ Install Ghaymah CLI
+        run: curl -sSl https://cli.ghaymah.systems/install.sh | bash
+
 
       # 1️⃣1️⃣ Login to Ghaymah
       - name: Login to Ghaymah
