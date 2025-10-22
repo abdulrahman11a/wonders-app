@@ -73,7 +73,7 @@ jobs:
 
       # 1️⃣1️⃣ Login to Ghaymah
       - name: Login to Ghaymah
-        run: gy auth login -e ${{ secrets.GY_EMAIL }} -p ${{ secrets.GY_PASSWORD }}
+        run: $HOME/ghaymah/bin/gy auth login --email "${{ secrets.GY_EMAIL }}" --password "${{ secrets.GY_PASSWORD }}"
 
       # 1️⃣2️⃣ Deploy to Ghaymah
       - name: Deploy to Ghaymah
